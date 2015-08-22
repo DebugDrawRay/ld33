@@ -32,7 +32,26 @@ public class player : MonoBehaviour
 
     void Awake()
     {
+        initializeInstance();
         initializeComponents();
+    }
+
+    public static player Instance
+    {
+        get;
+        private set;
+    }
+    
+    void initializeInstance()
+    {
+        if(Instance != null)
+        {
+            Destroy(this.gameObject);
+            return;
+        }
+
+        Instance = this;
+        GameObject.DontDestroyOnLoad(this.gameObject);
     }
 
     void initializeVars()

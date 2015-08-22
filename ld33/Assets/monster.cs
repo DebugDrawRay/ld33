@@ -10,10 +10,7 @@ public class monster : MonoBehaviour
     public float health;
     private float damageTaken;
 
-    [Header("Target Control")]
     private player _player;
-    public float followSpeed;
-    public float followAccel;
 
     [Header("Patrol Control")]
     public float timeToNewWp;
@@ -28,11 +25,25 @@ public class monster : MonoBehaviour
     public float chaseDistance;
     public float damageThreshold;
 
+    public float followSpeed;
+    public float followAccel;
+
+    public float findingTime;
+    private float maxFindingTime;
+
     private bool hostileHit;
     private bool inSight;
 
+    [Header("Dormancy Control")]
+    public float dormantTime;
+    public int dormantCycles;
+
+    private float maxDormantTime;
+    private int maxDormantCycles;
+
     [Header("Collisions")]
     public string[] hostileTags;
+    public float hostileDamage;
 
     //components
     private Rigidbody rigid;
@@ -41,6 +52,7 @@ public class monster : MonoBehaviour
     //state control
     private bool patrolling;
     private bool dormant;
+    private bool finding;
 
     void Awake()
     {
@@ -60,6 +72,8 @@ public class monster : MonoBehaviour
 
         maxTimeToNewWp = timeToNewWp;
         maxPatrolTime = patrolTime;
+        maxDormantTime = dormantTime;
+        maxFindingTime = findingTime;
         patrolling = true;
     }
 
@@ -71,10 +85,23 @@ public class monster : MonoBehaviour
     void Update()
     {
         stateMachine();
+
+        if(health <= 0)
+        {
+            deathEvent();
+        }
     }
 
     void patrolController()
-    {       
+    {
+        timeToNewWp -= Time.deltaTime;
+
+        if (timeToNewWp <= 0)
+        {
+            waypoint = _gameController.getWaypoint();
+            timeToNewWp = maxTimeToNewWp;
+        }
+
         followTarget(waypoint);
     }
     
@@ -87,7 +114,7 @@ public class monster : MonoBehaviour
         else if(patrolTime <= 0)
         {
             patrolTime = maxPatrolTime;
-            patrolling = false;
+            dormant = true;
         }
     }
 
@@ -103,19 +130,61 @@ public class monster : MonoBehaviour
 
     void followTarget(Vector3 target)
     {
-        timeToNewWp -= Time.deltaTime;
-
-        if (timeToNewWp <= 0)
-        {
-            waypoint = _gameController.getWaypoint();
-            timeToNewWp = maxTimeToNewWp;
-        }
-
         Vector3 direction = target - transform.position;
         Vector3 targetVel = direction; 
         targetVel = targetVel.normalized * followSpeed;
         Vector3 vel = Vector3.Lerp(rigid.velocity, targetVel, followAccel);
         rigid.velocity = vel;
+    }
+
+    void dormancyController()
+    {
+        dormantTime -= Time.deltaTime;
+        patrolling = false;
+
+        if(rigid.velocity.magnitude > 0)
+        {
+            rigid.velocity = Vector3.zero;
+            dormantCycles--;
+        }
+        if (dormantTime <= 0)
+        {
+            if (dormantCycles <= 0)
+            {
+                finding = true;
+                dormant = false;
+                patrolling = true;
+            }
+            else
+            {
+                float ran = Random.value;
+                if (ran > .5)
+                {
+                    patrolling = true;
+                    dormantTime = maxDormantTime;
+                    dormant = false;
+                }
+                else
+                {
+                    dormantTime = maxDormantTime;
+                }
+            }
+        }
+    }
+
+    void findingController()
+    {
+        findingTime -= Time.deltaTime;
+        patrolling = true;
+        dormant = false;
+        followTarget(_player.transform.position);
+
+        if(findingTime <= 0)
+        {
+            findingTime = maxFindingTime;
+            finding = false;
+        }
+
     }
 
     //collisions
@@ -125,49 +194,85 @@ public class monster : MonoBehaviour
         {
             if(hit.gameObject.tag == tag)
             {
-                health -= 10;
-                damageTaken += 10;
+                health -= hostileDamage;
+                damageTaken += hostileDamage;
                 hostileHit = true;
             }
         }
     }
 
+    //death event
+    void deathEvent()
+    {
+        Destroy(this.gameObject);
+    }
     void patrolState()
     {
+        Debug.Log("Patrolling");
         patrolController();
         patrolTimer();
     }
 
     void chaseState()
     {
+        Debug.Log("Chasing");
         chaseController();
+    }
+
+    void dormantState()
+    {
+        Debug.Log("Dormant");
+        dormancyController();
+    }
+    void findingState()
+    {
+        Debug.Log("Finding Player");
+        findingController();
     }
 
     void stateMachine()
     {
-        if (dormant)
-        if(patrolling)
+        if (finding)
         {
-            currentState = patrolState;
-
-            if (targetDist(_player.gameObject) <= chaseDistance)
-            {
-                patrolling = false;
-            }
-
-            if (hostileHit)
-            {
-                hostileHit = false;
-                patrolling = false;
-            }
+            currentState = findingState;
         }
         else
         {
-            currentState = chaseState;
-            if(damageTaken >= damageThreshold)
+            if (targetDist(_player.gameObject) <= chaseDistance)
             {
-                damageTaken = 0;
+                patrolling = false;
+                dormant = false;
+            }
+            else if (targetDist(_player.gameObject) >= chaseDistance)
+            {
                 patrolling = true;
+            }
+
+            if (dormant)
+            {
+                currentState = dormantState;
+            }
+            else
+            {
+                if (patrolling)
+                {
+                    currentState = patrolState;
+
+                    if (hostileHit)
+                    {
+                        hostileHit = false;
+                        patrolling = false;
+                    }
+                }
+                else
+                {
+                    currentState = chaseState;
+                    if (damageTaken >= damageThreshold)
+                    {
+                        damageTaken = 0;
+                        patrolling = true;
+                    }
+                }
             }
         }
         

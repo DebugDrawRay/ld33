@@ -6,6 +6,11 @@ public class player : MonoBehaviour
     private delegate void stateContainer();
     private stateContainer currentState;
 
+    [Header("Status Control")]
+    public float health;
+    private float maxHealth;
+    public float hostileDamage;
+
     [Header("Movement Control")]
     public float maxSpeed;
     public float acceleration;
@@ -13,6 +18,9 @@ public class player : MonoBehaviour
 
     [Header("Weapon Control")]
     public GameObject projectile;
+
+    [Header("Collisions")]
+    public string[] hostileTags;
 
     //inputs
     private float hor;
@@ -66,7 +74,10 @@ public class player : MonoBehaviour
     {
         inputListener();
         stateMachine();
- 
+        if(health <= 0)
+        {
+            deathEvent();
+        }
     }
 
     void inputListener()
@@ -107,6 +118,22 @@ public class player : MonoBehaviour
         {
             Instantiate(projectile, transform.position, transform.rotation);
         }
+    }
+
+    void OnTriggerEnter(Collider hit)
+    {
+        foreach(string tag in hostileTags)
+        {
+            if(hit.gameObject.tag == tag)
+            {
+                health -= hostileDamage;
+            }
+        }
+    }
+
+    void deathEvent()
+    {
+        Destroy(this.gameObject);
     }
     void movementState()
     {

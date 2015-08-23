@@ -15,6 +15,7 @@ public class player : MonoBehaviour
     public float maxSpeed;
     public float acceleration;
     public float mouseSmooth;
+    public float sideStepPenalty;
     public float backMovePenalty;
     [Header("Weapon Control")]
     public GameObject projectile;
@@ -113,6 +114,7 @@ public class player : MonoBehaviour
     void movementControl()
     {
         Vector3 currentVel = rigid.velocity;
+        hor = hor / sideStepPenalty;
         if(ver < 0)
         {
             ver = ver / backMovePenalty;

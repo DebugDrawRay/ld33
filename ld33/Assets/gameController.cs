@@ -56,7 +56,10 @@ public class gameController : MonoBehaviour
         }
         else if (playerDist >= (gameAreaRadius - firstWarnDist))
         {
-
+         
+        }
+        else
+        {
         }
       
     }

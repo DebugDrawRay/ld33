@@ -8,14 +8,14 @@ public class player : MonoBehaviour
 
     [Header("Status Control")]
     public float health;
-    private float maxHealth;
+    public float maxHealth;
     public float hostileDamage;
 
     [Header("Movement Control")]
     public float maxSpeed;
     public float acceleration;
     public float mouseSmooth;
-
+    public float backMovePenalty;
     [Header("Weapon Control")]
     public GameObject projectile;
 
@@ -44,6 +44,11 @@ public class player : MonoBehaviour
         initializeComponents();
     }
 
+    void Start()
+    {
+        initializeVars();
+    }
+
     public static player Instance
     {
         get;
@@ -65,6 +70,7 @@ public class player : MonoBehaviour
     void initializeVars()
     {
         camOriginalRot = Camera.main.transform.rotation;
+        maxHealth = health;
     }
     void initializeComponents()
     {
@@ -107,6 +113,11 @@ public class player : MonoBehaviour
     void movementControl()
     {
         Vector3 currentVel = rigid.velocity;
+        if(ver < 0)
+        {
+            ver = ver / backMovePenalty;
+            hor = hor / backMovePenalty;
+        }
         Vector3 targetVel = ((transform.forward * ver) + (transform.right * hor)) * maxSpeed;
         Vector3 forceVect = Vector3.Lerp(currentVel, targetVel, acceleration);
         rigid.velocity = forceVect;
@@ -131,9 +142,11 @@ public class player : MonoBehaviour
         }
     }
 
-    void deathEvent()
+    public void deathEvent()
     {
         Destroy(this.gameObject);
+        Destroy(gameController.Instance.gameObject);
+        Application.LoadLevel("End");
     }
     void movementState()
     {

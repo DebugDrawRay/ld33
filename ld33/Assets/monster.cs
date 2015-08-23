@@ -84,8 +84,10 @@ public class monster : MonoBehaviour
 
     void Update()
     {
-        stateMachine();
-
+        if (_player)
+        {
+            stateMachine();
+        }
         if(health <= 0)
         {
             deathEvent();
@@ -151,6 +153,7 @@ public class monster : MonoBehaviour
         {
             if (dormantCycles <= 0)
             {
+                dormantCycles = maxDormantCycles;
                 finding = true;
                 dormant = false;
                 patrolling = true;
@@ -205,6 +208,9 @@ public class monster : MonoBehaviour
     void deathEvent()
     {
         Destroy(this.gameObject);
+        Destroy(_player.gameObject);
+        Destroy(_gameController.gameObject);
+        Application.LoadLevel("End");
     }
     void patrolState()
     {
@@ -232,6 +238,14 @@ public class monster : MonoBehaviour
 
     void stateMachine()
     {
+        if (hostileHit)
+        {
+            hostileHit = false;
+            finding = false;
+            patrolling = false;
+            dormant = false;
+        }
+
         if (finding)
         {
             currentState = findingState;
@@ -257,12 +271,6 @@ public class monster : MonoBehaviour
                 if (patrolling)
                 {
                     currentState = patrolState;
-
-                    if (hostileHit)
-                    {
-                        hostileHit = false;
-                        patrolling = false;
-                    }
                 }
                 else
                 {

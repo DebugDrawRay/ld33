@@ -5,8 +5,10 @@ public class gameController : MonoBehaviour
 {
     [Header("Game Area Control")]
     public float gameAreaRadius;
+    public float firstWarnDist;
+    public float lastWarnDist;
 
-
+    public int playerDist;
     void Awake()
     {
         initializeInstance();
@@ -30,6 +32,10 @@ public class gameController : MonoBehaviour
         GameObject.DontDestroyOnLoad(this.gameObject);
     }
 
+    void Update()
+    {
+        enforceGameArea();
+    }
     public Vector3 getWaypoint()
     {
         Vector3 ranSphere = Random.insideUnitSphere;
@@ -37,4 +43,21 @@ public class gameController : MonoBehaviour
         return ranPos;
     }
 
+    void enforceGameArea()
+    {
+        playerDist = (int)Mathf.Round(Vector3.Distance(player.Instance.transform.position, transform.position));
+        if (playerDist >= gameAreaRadius)
+        {
+            player.Instance.deathEvent();
+        }
+        else if (playerDist >= (gameAreaRadius - lastWarnDist))
+        {
+
+        }
+        else if (playerDist >= (gameAreaRadius - firstWarnDist))
+        {
+
+        }
+      
+    }
 }

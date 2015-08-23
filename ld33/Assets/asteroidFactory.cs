@@ -9,10 +9,11 @@ public class asteroidFactory : MonoBehaviour
     public int minCount;
     public int maxCount;
     public float minRange;
-    public float maxRange;
+    private float maxRange;
 
     void Start()
     {
+        maxRange = gameController.Instance.gameAreaRadius;
         int count = Random.Range(minCount, maxCount);
         for (int i = 0; i <= count; i++)
         {

@@ -8,4 +8,5 @@ public static class Inputs
     public const string mouseX = "Mouse X";
     public const string mouseY = "Mouse Y";
     public const string fire = "Fire";
+    public const string pause = "Pause";
 }

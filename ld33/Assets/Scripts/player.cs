@@ -22,7 +22,16 @@ public class player : MonoBehaviour
 
     [Header("Collisions")]
     public string[] hostileTags;
+    public AudioClip damageHit;
 
+    private bool knockback;
+    private Vector3 knockbackDirection;
+    public float knockbackTime;
+    private float maxKnockbackTime;
+
+    public float knockbackForce;
+
+    
     //inputs
     private float hor;
     private float ver;
@@ -72,6 +81,7 @@ public class player : MonoBehaviour
     {
         camOriginalRot = Camera.main.transform.rotation;
         maxHealth = health;
+        maxKnockbackTime = knockbackTime;
     }
     void initializeComponents()
     {
@@ -79,11 +89,14 @@ public class player : MonoBehaviour
     }
     void Update()
     {
-        inputListener();
-        stateMachine();
-        if(health <= 0)
+        if (!gameController.Instance.paused)
         {
-            deathEvent();
+            inputListener();
+            stateMachine();
+            if (health <= 0)
+            {
+                deathEvent();
+            }
         }
     }
 
@@ -133,12 +146,27 @@ public class player : MonoBehaviour
         }
     }
 
+    void knockbackController()
+    {
+        knockbackTime -= Time.deltaTime;
+        rigid.velocity = -knockbackDirection * knockbackForce;
+
+        if(knockbackTime <= 0)
+        {
+            knockbackTime = maxKnockbackTime;
+            knockback = false;
+        }
+    }
+
     void OnTriggerEnter(Collider hit)
     {
         foreach(string tag in hostileTags)
         {
             if(hit.gameObject.tag == tag)
             {
+                knockback = true;
+                knockbackDirection = hit.transform.position - transform.position;
+                AudioSource.PlayClipAtPoint(damageHit, transform.position);
                 health -= hostileDamage;
             }
         }
@@ -156,9 +184,21 @@ public class player : MonoBehaviour
         mouseLook();
         weaponControl();
     }
+    void knockbackState()
+    {
+        mouseLook();
+        knockbackController();
+    }
     void stateMachine()
     {
-        currentState = movementState;
+        if (knockback)
+        {
+            currentState = knockbackState;
+        }
+        else
+        {
+            currentState = movementState;
+        }
         currentState();
     }
 }

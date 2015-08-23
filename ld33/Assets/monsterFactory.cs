@@ -17,11 +17,12 @@ public class monsterFactory : MonoBehaviour
         maxRange = gameController.Instance.gameAreaRadius;
         spawnMonster();
     }
-    void spawnMonster()
+    public void spawnMonster()
     {
         Vector3 ranSphere = Random.insideUnitSphere;
         float ranRange = Random.Range(minRange, maxRange);
         Vector3 ranPos = (ranSphere * ranRange) + transform.position;
         monsterSpawned = Instantiate(monster, ranPos, Quaternion.identity) as GameObject;
+        monsterSpawned.GetComponent<monster>().factory = this;
     }
 }

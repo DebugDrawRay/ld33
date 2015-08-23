@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class damageReact : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class damageReact : MonoBehaviour
     private player _player;
     private Vector2 origin;
     private float currentHealth;
+
     void Start()
     {
         _player = player.Instance;
@@ -34,7 +36,6 @@ public class damageReact : MonoBehaviour
         reactionLength -= Time.deltaTime;
         Vector2 ranCir = origin + (Random.insideUnitCircle * reactionMag);
         transform.position = ranCir;
-
         if(reactionLength <= 0)
         {
             transform.position = origin;

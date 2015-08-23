@@ -44,11 +44,12 @@ public class monster : MonoBehaviour
     [Header("Collisions")]
     public string[] hostileTags;
     public float hostileDamage;
+    public AudioClip damageHit;
 
     //components
     private Rigidbody rigid;
     private gameController _gameController;
-
+    public monsterFactory factory;
     //state control
     private bool patrolling;
     private bool dormant;
@@ -84,13 +85,16 @@ public class monster : MonoBehaviour
 
     void Update()
     {
-        if (_player)
+        if (!gameController.Instance.paused)
         {
-            stateMachine();
-        }
-        if(health <= 0)
-        {
-            deathEvent();
+            if (_player)
+            {
+                stateMachine();
+            }
+            if (health <= 0)
+            {
+                deathEvent();
+            }
         }
     }
 
@@ -123,6 +127,7 @@ public class monster : MonoBehaviour
     void chaseController()
     {
         followTarget(_player.transform.position);
+        lookAtTarget(_player.transform.position);
     }
 
     float targetDist(GameObject target)
@@ -181,13 +186,20 @@ public class monster : MonoBehaviour
         patrolling = true;
         dormant = false;
         followTarget(_player.transform.position);
+        lookAtTarget(_player.transform.position);
 
-        if(findingTime <= 0)
+        if (findingTime <= 0)
         {
             findingTime = maxFindingTime;
             finding = false;
         }
 
+    }
+
+    void lookAtTarget(Vector3 target)
+    {
+        Vector3 relPos = target - transform.position;
+        transform.rotation = Quaternion.LookRotation(relPos);
     }
 
     //collisions
@@ -197,6 +209,7 @@ public class monster : MonoBehaviour
         {
             if(hit.gameObject.tag == tag)
             {
+                AudioSource.PlayClipAtPoint(damageHit, transform.position);
                 health -= hostileDamage;
                 damageTaken += hostileDamage;
                 hostileHit = true;
@@ -207,10 +220,9 @@ public class monster : MonoBehaviour
     //death event
     void deathEvent()
     {
+        factory.spawnMonster();
+        _gameController.killCount++;
         Destroy(this.gameObject);
-        Destroy(_player.gameObject);
-        Destroy(_gameController.gameObject);
-        Application.LoadLevel("End");
     }
     void patrolState()
     {
@@ -240,10 +252,13 @@ public class monster : MonoBehaviour
     {
         if (hostileHit)
         {
-            hostileHit = false;
-            finding = false;
+            finding = true;
             patrolling = false;
             dormant = false;
+
+            currentState = findingState;
+
+            hostileHit = false;
         }
 
         if (finding)

@@ -31,7 +31,7 @@ public class minimapPlayer : MonoBehaviour
                 icon.enabled = true;
                 Vector2 monPos = new Vector2(_monster.transform.position.x, _monster.transform.position.y);
                 Vector2 playerPos = new Vector2(_player.transform.position.x, _player.transform.position.y);
-                Vector2 relPos = playerPos - monPos;
+                Vector2 relPos = monPos - playerPos;
                 rectTrans.anchoredPosition = relPos / scaling;
             }
             else

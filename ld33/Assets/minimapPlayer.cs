@@ -39,5 +39,9 @@ public class minimapPlayer : MonoBehaviour
                 icon.enabled = false;
             }
         }
+        else
+        {
+            _monster = GameObject.FindGameObjectWithTag("Enemy");
+        }
     }
 }
